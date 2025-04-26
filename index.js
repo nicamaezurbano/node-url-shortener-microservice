@@ -25,7 +25,7 @@ app.get('/api/hello', function(req, res) {
 
 // Array of URL
 let url_array = [];
-console.log(url_array);
+let id = 0;
 
 app.post('/api/shorturl', function(req, res) {
   let url = req.body.url;
@@ -55,14 +55,22 @@ app.post('/api/shorturl', function(req, res) {
       else
       {
         // Check if the url is existing on the array
-        let isExists = url_array.includes(url);
+        let isExists = false;
+        url_array.forEach(element => {
+          if(element.original_url == url)
+          {
+            isExists = true;
+          }
+        });
+
         if(!isExists)
         {
-          url_array.push(url);
+          id++;
+          url_array.push({'original_url': url, 'id': id});
         }
 
         // Retrieve the short url based on its index +1
-        let shorturl = url_array.indexOf(url) + 1;
+        let shorturl = id;
         console.log(url_array);
 
         res.json({
@@ -76,12 +84,21 @@ app.post('/api/shorturl', function(req, res) {
 
 app.get('/api/shorturl/:shorturl', function(req, res) {
   let shorturl = req.params.shorturl;
-  let url_index = shorturl - 1;
+  let original_url = '';
 
-  if(url_array[url_index])
+  // Check if the url is existing on the array
+  let isExists = false;
+  url_array.forEach(element => {
+    if(element.id == shorturl)
+    {
+      isExists = true;
+      original_url = element.original_url;
+    }
+  });
+
+  if(isExists)
   {
     // Redirect to the url
-    let original_url = url_array[url_index];
     console.log(url_array);
     res.redirect(original_url);
   }

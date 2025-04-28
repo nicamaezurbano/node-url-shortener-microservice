@@ -29,21 +29,9 @@ let id = 0;
 
 app.post('/api/shorturl', function(req, res) {
   let url = req.body.url;
-  let hostname;
-
-  try 
-  {
-    // Retrieve hostname
-    hostname = new URL(url).hostname;
-  } 
-  catch (e) {
-    res.json({
-      "error":"Invalid URL"
-    });
-  }
 
   // Regex to follow the pattern : http://www.example.com
-  let urlPattern = /^(https?|ftp):\/\/([a-zA-Z0-9-]+\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(:\d+)?(\/[^\s?#]*)?(\?[^\s#]*)?(#[^\s]*)?$/;
+  let urlPattern = /^(https?|ftp):\/\/(localhost|([a-zA-Z0-9-]+\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(:\d+)?(\/[^\s?#]*)?(\?[^\s#]*)?(#[^\s]*)?$/;
 
   if(!urlPattern.test(url)) 
   {
@@ -54,42 +42,54 @@ app.post('/api/shorturl', function(req, res) {
   }
   else
   {
-    // Check the hostname if valid
-    dns.lookup(hostname, (err, address, family) => {
-      if(err)
-      {
-        console.log('error:' + err);
-        res.json({
-          "error":"Invalid Hostname"
-        });
-      }
-      else
-      {
-        // Check if the url is existing on the array
-        let isExists = false;
-        url_array.forEach(element => {
-          if(element.original_url == url)
-          {
-            isExists = true;
-          }
-        });
-
-        if(!isExists)
+    try 
+    {
+        
+      // Retrieve hostname
+      let hostname = new URL(url).hostname;
+      
+      // Check the hostname if valid
+      dns.lookup(hostname, (err, address, family) => {
+        if(err)
         {
-          id++;
-          url_array.push({'original_url': url, 'id': id});
+          console.log('error:' + err);
+          res.json({
+            "error":"Invalid Hostname"
+          });
         }
+        else
+        {
+          // Check if the url is existing on the array
+          let isExists = false;
+          url_array.forEach(element => {
+            if(element.original_url == url)
+            {
+              isExists = true;
+            }
+          });
 
-        // Retrieve the short url based on its index +1
-        let shorturl = id;
-        console.log(url_array);
+          if(!isExists)
+          {
+            id++;
+            url_array.push({'original_url': url, 'id': id});
+          }
 
-        res.json({
-          'original_url': url,
-          'short_url': shorturl
-        })
-      }
-    });
+          // Retrieve the short url based on its index +1
+          let shorturl = id;
+          console.log(url_array);
+
+          res.json({
+            'original_url': url,
+            'short_url': shorturl
+          })
+        }
+      });
+    } 
+    catch (e) {
+      res.json({
+        "error":"Invalid URL"
+      });
+    }
   }
 });
 
